@@ -16,6 +16,12 @@ let myUserId;
 let userCount = 0;
 let front = false;
 
+const flipCamera = document.getElementById("flipCamera");
+flipCamera.addEventListener("click", () => {
+    front = !front;
+    console.log("front setting : " + front);
+});
+
 const constraints = {
     audio: {
         autoGainControl: false,
@@ -32,11 +38,6 @@ const constraints = {
     },
 };
 
-const flipCamera = document.getElementById("flipCamera");
-flipCamera.addEventListener("click", () => {
-    front = !front;
-});
-
 const mediaDevices = navigator.mediaDevices;
 const getUserMedia =
     mediaDevices.getUserMedia ||
@@ -45,6 +46,7 @@ const getUserMedia =
 
 function videoChatResult() {
     Call();
+    copyInfo();
 }
 
 async function Call() {
@@ -134,6 +136,14 @@ function addVideoStream(video, stream) {
     } else {
         console.error("video output error");
     }
+}
+
+function copyInfo() {
+    const copyIcon = document.getElementById("copyUrl");
+    copyIcon.addEventListener("click", () => {
+        navigator.clipboard.writeText(window.location.href);
+        alert("The URL has been copied.");
+    });
 }
 
 function videoSwitch() {

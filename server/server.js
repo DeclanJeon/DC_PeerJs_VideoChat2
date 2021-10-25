@@ -33,12 +33,15 @@ app.get("/:room", (req, res) => {
 
 io.on("connection", (socket) => {
     socket.on("join-room", (roomId, userId) => {
+        console.log("roomId : " + roomId);
+        console.log("userId : " + userId);
         socket.join(roomId);
-        socket.broadcast.emit("user-connected", userId);
+        socket.to(roomId).emit("welcome");
+        socket.broadcast.to(roomId).emit("user-connected", userId);
         console.log("BoardCast User Connected : ", userId);
 
         socket.on("disconnect", () => {
-            socket.broadcast.emit("user-disconnected", userId);
+            socket.broadcast.to(roomId).emit("user-disconnected", userId);
             console.log("BoardCast User Disconnected : ", userId);
         });
 
@@ -48,13 +51,13 @@ io.on("connection", (socket) => {
                 user: socket.username,
             });
         });
-
         socket.on("screen-share", (stream) => {
             io.to(roomId).emit("screenShare", stream, userId);
         });
     });
 
     socket.on("new user", (user) => {
+        console.log("new user : " + user);
         socket.username = user;
         console.log("User connected - User name: " + socket.username);
     });

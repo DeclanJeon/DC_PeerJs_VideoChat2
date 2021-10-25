@@ -37,4 +37,13 @@ const peer = new Peer(undefined, {
 const username = window.prompt("Enter the username");
 socket.emit("new user", username);
 
+function connectPeers() {
+    conn = peer.connect(username);
+    peer.on("connection", (connection) => {
+        conn = connection;
+    });
+}
+
 /************Result Code********** */
+
+connectPeers();
