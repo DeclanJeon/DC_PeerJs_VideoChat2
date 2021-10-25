@@ -50,7 +50,7 @@ io.on("connection", (socket) => {
         });
 
         socket.on("screen-share", (stream) => {
-            io.to(roomId).emit("screenShare", stream);
+            io.to(roomId).emit("screenShare", stream, userId);
         });
     });
 

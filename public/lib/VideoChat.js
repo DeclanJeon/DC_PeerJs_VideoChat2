@@ -10,10 +10,10 @@ const remoteVideoContainer = document.getElementById(
 );
 
 const peers = {};
-const userCount = 0;
 
 let myVideoStream;
 let myUserId;
+let userCount = 0;
 let front = false;
 
 const constraints = {
@@ -43,9 +43,14 @@ const getUserMedia =
     mediaDevices.webkitGetUserMedia ||
     mediaDevices.mozGetUserMedia;
 
-async function videoChatResult() {
+function videoChatResult() {
+    Call();
+}
+
+async function Call() {
     await getUserMedia(constraints)
         .then((stream) => {
+            myVideoStream = stream;
             localVideo.autoplay = true;
             localVideo.setAttribute("playsinline", true);
             addVideoStream(localVideo, stream);
@@ -58,8 +63,10 @@ async function videoChatResult() {
                 });
             });
             socket.on("user-connected", (userId) => {
-                console.log("User connected: " + userId);
                 myUserId = userId;
+                console.log("The User has been Connected. : ", userId);
+                userCount = userCount + peer.connect.length;
+                console.log("userCount : " + userCount);
                 connectToNewUser(userId, stream);
             });
         })

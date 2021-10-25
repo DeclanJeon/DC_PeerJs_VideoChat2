@@ -1,7 +1,6 @@
 const socket = io("/");
 
 let conn;
-let username;
 
 socket.on("connect", () => {
     console.log("Socket ID:::::::" + socket.id);
@@ -35,15 +34,7 @@ const peer = new Peer(undefined, {
     debug: 3,
 });
 
-function connectPeers() {
-    username = window.prompt("Please enter the sharing PeerId");
-    socket.emit("new user", username);
-    conn = peer.connect(username);
-    peer.on("connection", (connection) => {
-        conn = connection;
-    });
-}
+const username = window.prompt("Enter the username");
+socket.emit("new user", username);
 
 /************Result Code********** */
-
-connectPeers();
