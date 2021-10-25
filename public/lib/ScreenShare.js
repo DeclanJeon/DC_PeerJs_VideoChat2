@@ -41,6 +41,7 @@ const shareScreen = async () => {
     try {
         captureStream = await mediaDevices.getDisplayMedia(displayMediaConfig);
         myScreenStream = captureStream;
+        captureStream.style.transform = "none";
     } catch (err) {
         console.error("Error: " + err);
     }

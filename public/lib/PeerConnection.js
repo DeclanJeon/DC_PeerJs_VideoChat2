@@ -1,12 +1,13 @@
 const socket = io("/");
+
+let conn;
 let username;
-let userCount = 0;
 
 socket.on("connect", () => {
-    console.log(socket.id);
+    console.log("Socket ID:::::::" + socket.id);
 });
 
-const peer = new Peer({
+const peer = new Peer(undefined, {
     initiator: true,
     trickle: false,
     path: "/",
@@ -38,24 +39,10 @@ function connectPeers() {
     username = window.prompt("Please enter the sharing PeerId");
     socket.emit("new user", username);
     conn = peer.connect(username);
+    peer.on("connection", (connection) => {
+        conn = connection;
+    });
 }
-
-peer.on("connection", (connection) => {
-    conn = connection;
-    console.log(conn);
-});
-
-peer.on("open", (id) => {
-    socket.emit("join-room", ROOM_ID, id);
-});
-
-peer.on("error", (err) => {
-    console.log("error : " + err);
-});
-
-socket.on("disconnect", () => {
-    console.log("disconnect::::" + socket.id);
-});
 
 /************Result Code********** */
 

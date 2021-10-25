@@ -34,7 +34,6 @@ app.get("/:room", (req, res) => {
 io.on("connection", (socket) => {
     socket.on("join-room", (roomId, userId) => {
         socket.join(roomId);
-        socket.to(roomId).emit("welcome");
         socket.broadcast.emit("user-connected", userId);
         console.log("BoardCast User Connected : ", userId);
 

@@ -1,35 +1,41 @@
 const videoGrid = document.getElementById("video-grid");
 const localVideoContainer = document.getElementById("local__video__container");
 const localVideo = document.createElement("video");
+localVideo.muted = true;
+localVideo.id = "local__video";
+localVideo.volume = 0;
+
 const remoteVideoContainer = document.getElementById(
     "remote__video__container"
 );
 
-const userName = document.getElementById("userName");
-let remoteUserName = document.createElement("div");
-remoteUserName.setAttribute("id", "remoteUserName");
+const peers = {};
+const userCount = 0;
 
-localVideo.id = "local__video";
-localVideo.volume = 0;
-
-let conn;
-let peers = {};
 let myVideoStream;
 let myUserId;
+let front = false;
 
 const constraints = {
     audio: {
-        autoGainControl: true,
+        autoGainControl: false,
         channelCount: 2,
-        echoCancellation: true,
+        echoCancellation: false,
         latency: 0,
-        noiseSuppression: true,
+        noiseSuppression: false,
         sampleRate: 48000,
         sampleSize: 16,
         volume: 1.0,
     },
-    video: true,
+    video: {
+        facingMode: front ? "user" : "environment",
+    },
 };
+
+const flipCamera = document.getElementById("flipCamera");
+flipCamera.addEventListener("click", () => {
+    front = !front;
+});
 
 const mediaDevices = navigator.mediaDevices;
 const getUserMedia =
@@ -37,85 +43,97 @@ const getUserMedia =
     mediaDevices.webkitGetUserMedia ||
     mediaDevices.mozGetUserMedia;
 
-function videoChatResult() {
-    Call();
-}
-
-async function Call() {
-    try {
-        const stream = await getUserMedia(constraints);
-        myVideoStream = stream;
-        addVideoStream(localVideo, stream);
-
-        peer.on("call", (call) => {
-            call.answer(stream);
-            const remoteVideo = document.createElement("video");
-            remoteVideo.setAttribute("id", "remote__video");
-            remoteVideo.volume = 0;
-
-            call.on("stream", (userVideoStream) => {
-                addVideoStream(remoteVideo, userVideoStream);
+async function videoChatResult() {
+    await getUserMedia(constraints)
+        .then((stream) => {
+            localVideo.autoplay = true;
+            localVideo.setAttribute("playsinline", true);
+            addVideoStream(localVideo, stream);
+            peer.on("call", (call) => {
+                call.answer(stream);
+                const video = document.createElement("video");
+                video.id = "remote__video";
+                call.on("stream", (userVideoStream) => {
+                    addVideoStream(video, userVideoStream);
+                });
             });
+            socket.on("user-connected", (userId) => {
+                console.log("User connected: " + userId);
+                myUserId = userId;
+                connectToNewUser(userId, stream);
+            });
+        })
+        .catch((err) => {
+            console.error(err);
         });
 
-        socket.on("user-connected", (userId) => {
-            userDisplayName = userId;
-            myUserId = userId;
-            console.log("The User has been Connected. : ", userId);
-            userCount = userCount + peer.connect.length;
-            console.log("userCount : " + userCount);
-            socket.emit(
-                "new message",
-                "The User has been Connected. " + username
-            );
-            socket.emit("new message", "The User Count " + userCount);
-            connectToNewUser(userId, stream);
-        });
-
-        socket.on("user-disconnected", (userId) => {
-            if (peers[userId]) {
-                peers[userId].close();
-                socket.emit(
-                    "new message",
-                    "The User has been Disconnected. " + peers[userId]
-                );
-            }
-        });
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-function addVideoStream(video, stream) {
-    video.srcObject = stream;
-    video.addEventListener("loadedmetadata", () => {
-        video.play();
+    socket.on("user-disconnected", (userId) => {
+        if (peers[userId]) {
+            peers[userId].close();
+        }
     });
 
-    if (video.id == "local__video") {
-        localVideoContainer.append(video);
-        userName.textContent = peer.id;
-    } else {
-        const remoteVideoBox = document.createElement("div");
-        remoteVideoBox.id = "remote__Video__Box";
-        remoteVideoBox.append(video, remoteUserName);
-        remoteVideoContainer.append(remoteVideoBox);
-    }
+    peer.on("open", (id) => {
+        console.log("voice chat on!");
+        socket.emit("join-room", ROOM_ID, id);
+    });
+
+    peer.on("error", (err) => {
+        console.log("error : " + err);
+    });
 }
 
 function connectToNewUser(userId, stream) {
-    console.log("connectToNewUser : " + userId);
     const call = peer.call(userId, stream);
     const video = document.createElement("video");
-    video.setAttribute("id", "remote__video");
-    video.volume = 0;
+    //const selectVideoBox = document.getElementsByClassName(myUserId);
+    video.id = "remote__video";
+    video.autoplay = true;
+    video.setAttribute("playsinline", true);
     call.on("stream", (userVideoStream) => {
         addVideoStream(video, userVideoStream);
-        remoteUserName.textContent = userId;
     });
+
     call.on("close", () => {
         video.remove();
+        //selectVideoBox.remote__VideoBox.remove();
     });
+
+    peers[userId] = call;
+}
+
+function addVideoStream(video, stream) {
+    //const userName = document.createElement("div");
+    //userName.id = "userName";
+    //const videoBox = document.createElement("div");
+    //videoBox.className = "videoBox";
+    video.srcObject = stream;
+    video.onloadedmetadata = () => {
+        video.play();
+    };
+
+    if (video.id == "local__video") {
+        //videoBox.id = "local__VideoBox";
+        //videoBox.className = myUserId;
+        //videoBox.append(video, userName);
+        localVideoContainer.append(video);
+        //userName.textContent = myUserId;
+    } else if (video.id == "remote__video") {
+        //videoBox.id = "remote__VideoBox";
+        //videoBox.className = myUserId;
+        //videoBox.append(video, userName);
+        remoteVideoContainer.append(video);
+        //userName.textContent = myUserId;
+    } else {
+        console.error("video output error");
+    }
+}
+
+function videoSwitch() {
+    const selectRemoteVideo = document.querySelector("remote__video");
+    const selectLocalVideo = document.querySelector("local__video");
+
+    selectRemoteVideo.addEventListener("click", () => {});
 }
 
 /******Result Code****** */
